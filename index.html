@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViralScan SEA - Live Social Media Trends</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-green': '#39FF14',
+                        'neon-red': '#FF003C',
+                        'dark-bg': '#050505',
+                        'card-bg': '#0f0f0f'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        body {
+            background-color: #050505;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #39FF14; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF003C; 
+        }
+
+        /* Neon Glow Effects */
+        .glow-green {
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        }
+        .glow-green:hover {
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
+        }
+        
+        .glow-red {
+            box-shadow: 0 0 10px rgba(255, 0, 60, 0.3);
+        }
+        .glow-red-text {
+            text-shadow: 0 0 8px rgba(255, 0, 60, 0.8);
+        }
+        .glow-green-text {
+            text-shadow: 0 0 8px rgba(57, 255, 20, 0.8);
+        }
+
+        /* Scanline effect for background */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative pb-20">
+    <div class="scanlines"></div>
+
+    <!-- Header -->
+    <header class="border-b border-neon-red/30 bg-black/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-radar text-neon-green text-3xl animate-pulse"></i>
+                <h1 class="text-2xl font-extrabold tracking-wider uppercase text-white">
+                    Viral<span class="text-neon-red glow-red-text">Scan</span> <span class="text-neon-green glow-green-text">SEA</span>
+                </h1>
+            </div>
+            <div class="hidden sm:block text-xs font-mono text-neon-green/70">
+                STATUS: <span class="text-neon-green glow-green-text">LIVE MONITORING</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        
+        <!-- Controls Section -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-card-bg p-4 rounded-lg border border-gray-800">
+            
+            <!-- Filters -->
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="text-gray-400 text-sm font-semibold uppercase tracking-wider mr-2">Region:</span>
+                <button onclick="setFilter('ALL')" id="btn-ALL" class="filter-btn px-4 py-1.5 rounded-full border border-neon-green text-neon-green font-bold text-sm transition-all bg-neon-green text-black glow-green">
+                    ALL
+                </button>
+                <button onclick="setFilter('MY')" id="btn-MY" class="filter-btn px-4 py-1.5 rounded-full border border-neon-green text-neon-green hover:bg-neon-green/20 font-bold text-sm transition-all">
+                    Malaysia
+                </button>
+                <button onclick="setFilter('SG')" id="btn-SG" class="filter-btn px-4 py-1.5 rounded-full border border-neon-green text-neon-green hover:bg-neon-green/20 font-bold text-sm transition-all">
+                    Singapore
+                </button>
+                <button onclick="setFilter('ID')" id="btn-ID" class="filter-btn px-4 py-1.5 rounded-full border border-neon-green text-neon-green hover:bg-neon-green/20 font-bold text-sm transition-all">
+                    Indonesia
+                </button>
+            </div>
+
+            <!-- Sorting -->
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <span class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Sort By:</span>
+                <select id="sortSelect" onchange="setSort()" class="bg-black border border-neon-red text-neon-red px-4 py-2 rounded focus:outline-none glow-red font-bold text-sm uppercase cursor-pointer w-full md:w-auto appearance-none text-center">
+                    <option value="POPULARITY">🔥 Popularity (Views/Likes)</option>
+                    <option value="NEWEST">⚡ Newest First</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Grid Container -->
+        <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Cards will be injected here via JavaScript -->
+        </div>
+
+        <!-- Empty State (Hidden by default) -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <i class="fa-solid fa-ghost text-6xl text-gray-700 mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-500">No viral data found for this sector.</h3>
+        </div>
+
+    </main>
+
+    <script>
+        // Mock Data representing viral topics across platforms and countries
+        const viralData = [
+            {
+                id: 1,
+                platform: 'TikTok',
+                icon: 'fa-tiktok',
+                title: 'Nasi Lemak Burger Review Goes Horribly Wrong 🍔🔥',
+                country: 'MY',
+                engagement: 2500000,
+                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+                excerpt: 'Local influencer drops the new menu item and chaos ensues in the comments.'
+            },
+            {
+                id: 2,
+                platform: 'X',
+                icon: 'fa-x-twitter',
+                title: 'MRT Breakdown Drama: Commuters stuck for 2 hours',
+                country: 'SG',
+                engagement: 450000,
+                timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+                excerpt: 'Megathread compiling all the videos from the red line incident this morning.'
+            },
+            {
+                id: 3,
+                platform: 'Instagram',
+                icon: 'fa-instagram',
+                title: 'Bali Beach Club New Entry Rules Spark Outrage 🏖️🚫',
+                country: 'ID',
+                engagement: 3100000,
+                timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+                excerpt: 'Tourists and locals debate the controversial new minimum spend policy.'
+            },
+            {
+                id: 4,
+                platform: 'Threads',
+                icon: 'fa-threads',
+                title: 'Who is the mystery tech CEO spotted at MBS casino?',
+                country: 'SG',
+                engagement: 89000,
+                timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 mins ago
+                excerpt: 'Spotted placing a massive bet, crypto community is trying to identify him.'
+            },
+            {
+                id: 5,
+                platform: 'Facebook',
+                icon: 'fa-facebook',
+                title: 'Viral Traffic Cop Dance in Jakarta Crossroad 👮‍♂️💃',
+                country: 'ID',
+                engagement: 1200000,
+                timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+                excerpt: 'Entertaining commuters during the heavy gridlock yesterday evening.'
+            },
+            {
+                id: 6,
+                platform: 'TikTok',
+                icon: 'fa-tiktok',
+                title: 'KLCC Drone Show Fails Epicly Mid-Air 💥',
+                country: 'MY',
+                engagement: 1800000,
+                timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
+                excerpt: 'Hundreds of drones lost sync and created abstract art instead of the flag.'
+            },
+            {
+                id: 7,
+                platform: 'X',
+                icon: 'fa-x-twitter',
+                title: 'Indomie vs Maggi: The Ultimate Regional Debate Continues',
+                country: 'MY',
+                engagement: 320000,
+                timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 mins ago
+                excerpt: 'A simple poll turned into a massive cultural war in the replies.'
+            },
+            {
+                id: 8,
+                platform: 'Instagram',
+                icon: 'fa-instagram',
+                title: 'Secret Menu at Maxwell Hawker Center goes Viral 🍜',
+                country: 'SG',
+                engagement: 670000,
+                timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
+                excerpt: 'Foodies are queueing for 3 hours after this reel dropped.'
+            }
+        ];
+
+        // State variables
+        let currentFilter = 'ALL';
+        let currentSort = 'POPULARITY';
+
+        // Helper: Format numbers (e.g., 2500000 -> 2.5M)
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num;
+        }
+
+        // Helper: Calculate relative time
+        function timeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+            
+            let interval = seconds / 3600;
+            if (interval > 24) return Math.floor(interval / 24) + "d ago";
+            if (interval >= 1) return Math.floor(interval) + "h ago";
+            
+            interval = seconds / 60;
+            if (interval >= 1) return Math.floor(interval) + "m ago";
+            
+            return Math.floor(seconds) + "s ago";
+        }
+
+        // Helper: Get color for country badge
+        function getCountryStyle(country) {
+            switch(country) {
+                case 'MY': return 'bg-yellow-500 text-black'; // Representing colors from flag vaguely
+                case 'SG': return 'bg-red-600 text-white';
+                case 'ID': return 'bg-white text-red-600 border border-red-600';
+                default: return 'bg-gray-500 text-white';
+            }
+        }
+
+        // Update active button styling
+        function updateFilterButtons() {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                if (btn.id === `btn-${currentFilter}`) {
+                    btn.classList.add('bg-neon-green', 'text-black', 'glow-green');
+                    btn.classList.remove('hover:bg-neon-green/20');
+                } else {
+                    btn.classList.remove('bg-neon-green', 'text-black', 'glow-green');
+                    btn.classList.add('hover:bg-neon-green/20');
+                }
+            });
+        }
+
+        // Filter and Sort Logic
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            const emptyState = document.getElementById('emptyState');
+            container.innerHTML = '';
+
+            // 1. Filter
+            let filteredData = viralData;
+            if (currentFilter !== 'ALL') {
+                filteredData = viralData.filter(item => item.country === currentFilter);
+            }
+
+            // 2. Sort
+            filteredData.sort((a, b) => {
+                if (currentSort === 'POPULARITY') {
+                    return b.engagement - a.engagement;
+                } else if (currentSort === 'NEWEST') {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                }
+                return 0;
+            });
+
+            // Handle empty state
+            if (filteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // 3. Render
+            filteredData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'group bg-card-bg border border-gray-800 rounded-xl p-5 flex flex-col justify-between hover:border-neon-green transition-all duration-300 hover:-translate-y-1 relative overflow-hidden';
+                
+                // Add a subtle red gradient glow on hover inside the card
+                const glowBg = document.createElement('div');
+                glowBg.className = 'absolute top-0 left-0 w-full h-full bg-gradient-to-br from-neon-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none';
+                card.appendChild(glowBg);
+
+                card.innerHTML += `
+                    <div>
+                        <!-- Header row -->
+                        <div class="flex justify-between items-center mb-4 relative z-10">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-brands ${item.icon} text-xl text-gray-300 group-hover:text-neon-green transition-colors"></i>
+                                <span class="text-sm font-semibold text-gray-400 group-hover:text-white transition-colors">${item.platform}</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-xs font-bold ${getCountryStyle(item.country)}">
+                                ${item.country}
+                            </span>
+                        </div>
+                        
+                        <!-- Title -->
+                        <h2 class="text-lg font-bold text-white mb-2 leading-tight group-hover:glow-green-text relative z-10 line-clamp-3">
+                            ${item.title}
+                        </h2>
+                        
+                        <!-- Excerpt -->
+                        <p class="text-gray-500 text-sm mb-6 relative z-10 line-clamp-2">
+                            ${item.excerpt}
+                        </p>
+                    </div>
+
+                    <!-- Footer row -->
+                    <div class="flex justify-between items-end border-t border-gray-800 pt-3 relative z-10">
+                        <div class="flex flex-col">
+                            <span class="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Engagement</span>
+                            <div class="flex items-center gap-1.5 text-neon-red font-mono font-bold">
+                                <i class="fa-solid fa-fire text-sm"></i>
+                                <span class="text-lg glow-red-text">${formatNumber(item.engagement)}</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400 font-mono flex items-center gap-1">
+                            <i class="fa-regular fa-clock"></i>
+                            ${timeAgo(item.timestamp)}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Event Handlers
+        window.setFilter = function(filterValue) {
+            currentFilter = filterValue;
+            updateFilterButtons();
+            renderCards();
+        }
+
+        window.setSort = function() {
+            const select = document.getElementById('sortSelect');
+            currentSort = select.value;
+            renderCards();
+        }
+
+        // Initial render
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCards();
+        });
+
+    </script>
+</body>
+</html>
